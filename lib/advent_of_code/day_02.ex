@@ -32,6 +32,23 @@ defmodule AdventOfCode.Day02 do
 
   end
 
+  defp parseRounds(games) do
+    rounds = Enum.map(games, fn game -> 
+      round = Regex.replace(~r/Game \d+\:/, game, "") |> String.split(";", trim: true) 
+      Enum.map(round, fn roundPart -> 
+        String.split(roundPart, ",", trim: true) |> Enum.map(fn s -> String.trim(s) end)
+      end)
+    end)
+  end
+
+  defp countRevealed(rounds) do
+    results = Enum.map(rounds, fn round -> 
+      result = Enum.map(round, fn roundPart -> 
+        getCountsShownInRoundPart(roundPart)
+      end)
+    end)
+  end
+
   def part1(_args) do
     input = AdventOfCode.Input.get!(2, 2023)
 
@@ -50,21 +67,9 @@ defmodule AdventOfCode.Day02 do
 
     games = String.split(input, "\n", trim: true)
 
-    rounds = Enum.map(games, fn game -> 
-      round = Regex.replace(~r/Game \d+\:/, game, "") |> String.split(";", trim: true) 
-      Enum.map(round, fn roundPart -> 
-        String.split(roundPart, ",", trim: true) |> Enum.map(fn s -> String.trim(s) end)
-      end)
-    end)
+    rounds = parseRounds(games)
     
-
-    results = Enum.map(rounds, fn round -> 
-      result = Enum.map(round, fn roundPart -> 
-        getCountsShownInRoundPart(roundPart)
-      end)
-    end)
-
-    # IO.inspect(results)
+    results = countRevealed(rounds)
 
     Enum.with_index(results) |> Enum.reduce(0, fn curr, acc -> 
       {round, index} = curr
@@ -101,28 +106,11 @@ defmodule AdventOfCode.Day02 do
 # Game 4: 1 green, 3 red, 6 blue; 3 green, 6 red; 3 green, 15 blue, 14 red
 # Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green"
 
-    possibleFilter = %{
-      # only 12 red cubes, 13 green cubes, and 14 blue cubes
-      "red" => 12,
-      "green" => 13,
-      "blue" => 14
-    }
-
     games = String.split(input, "\n", trim: true)
 
-    rounds = Enum.map(games, fn game -> 
-      round = Regex.replace(~r/Game \d+\:/, game, "") |> String.split(";", trim: true) 
-      Enum.map(round, fn roundPart -> 
-        String.split(roundPart, ",", trim: true) |> Enum.map(fn s -> String.trim(s) end)
-      end)
-    end)
+    rounds = parseRounds(games)
     
-
-    results = Enum.map(rounds, fn round -> 
-      result = Enum.map(round, fn roundPart -> 
-        getCountsShownInRoundPart(roundPart)
-      end)
-    end)
+    results = countRevealed(rounds)
 
     initAcc = %{
       "red" => 0,
@@ -130,7 +118,6 @@ defmodule AdventOfCode.Day02 do
       "blue" => 0
     }
     
-
     Enum.map(results, fn curr -> 
 
       Enum.reduce(curr, initAcc, fn currPart, acc -> 
@@ -155,7 +142,6 @@ defmodule AdventOfCode.Day02 do
       end) |> getRoundPower()
       
     end)
-    |> IO.inspect()
     |> Enum.reduce(0, fn currTotal, num -> currTotal + num end)
 
   end
