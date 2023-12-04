@@ -1,11 +1,4 @@
 defmodule AdventOfCode.Day03 do
-  defp parseInput(input) do
-    String.split(input, "\n", trim: true)
-    |> Enum.map(fn row -> 
-      String.split(row, "", trim: true)
-    end)
-  end
-
   defp getPartNumStartsAndLens(input) do
     noNewLines = String.replace(input, "\n", "")
 
@@ -33,10 +26,10 @@ defmodule AdventOfCode.Day03 do
 # ...$.*....
 # .664.598.."
 
-    grid = parseInput(input)
+    grid = Helpers.CalbeGrid.parse(input, "\n", "")
 
-    gridLen = length(grid) - 1
-    rowLen = List.first(grid) |> length()
+    gridLen = Helpers.CalbeGrid.get_grid_len(grid)
+    rowLen = Helpers.CalbeGrid.get_grid_width(grid)
 
     partNumStartsAndLens = getPartNumStartsAndLens(input) 
     partNumActuals = getPartNumActuals(input)
@@ -57,30 +50,23 @@ defmodule AdventOfCode.Day03 do
         rDigOrPeriod = ~r/\d|\./
 
         # IO.puts(Enum.at(grid, y) |> Enum.at(localX))
+
+        transformations = [
+          %{x: -1, y: 0},
+          %{x: 0, y: -1},
+          %{x: 1, y: 0},
+          %{x: 0, y: 1},
+          %{x: -1, y: -1},
+          %{x: 1, y: -1},
+          %{x: 1, y: 1},
+          %{x: -1, y: 1}
+        ]
+
+        explored_points = Enum.map(transformations, fn transformation -> 
+          !Regex.match?(rDigOrPeriod, Helpers.CalbeGrid.get_by_point_and_transformation(grid, localX, y, {transformation[:x], transformation[:y]}, "."))
+        end)
         
-        hasSymbol = if (
-          #left
-          (localX > 0 && !Regex.match?(rDigOrPeriod, Enum.at(grid, y) |> Enum.at(localX - 1))) ||
-          #up
-          (y > 0 && !Regex.match?(rDigOrPeriod, Enum.at(grid, y - 1) |> Enum.at(localX))) ||
-          #right
-          (localX < (rowLen - 1) && !Regex.match?(rDigOrPeriod, Enum.at(grid, y) |> Enum.at(localX + 1))) ||
-          #down
-          (y < gridLen && !Regex.match?(rDigOrPeriod, Enum.at(grid, y + 1) |> Enum.at(localX))) ||
-          #upleft
-          (localX > 0 && y > 0 && !Regex.match?(rDigOrPeriod, Enum.at(grid, y - 1) |> Enum.at(localX - 1))) ||
-          #upright
-          (y > 0 && localX < (rowLen - 1) && !Regex.match?(rDigOrPeriod, Enum.at(grid, y - 1) |> Enum.at(localX + 1))) ||
-          #downright
-          (y < gridLen && localX < (rowLen - 1) && !Regex.match?(rDigOrPeriod, Enum.at(grid, y + 1) |> Enum.at(localX + 1))) ||
-          #downleft
-          (y < gridLen && localX > 0 && !Regex.match?(rDigOrPeriod, Enum.at(grid, y + 1) |> Enum.at(localX - 1)))
-        )
-        do
-          true
-        else
-          false
-        end
+        hasSymbol = Enum.member?(explored_points, true)
 
       end)
       
@@ -115,7 +101,7 @@ defmodule AdventOfCode.Day03 do
 # ...$.*....
 # .664.598.."
 
-    grid = parseInput(input)
+    grid = Helpers.CalbeGrid.parse(input, "\n", "")
 
     gridLen = length(grid) - 1
     rowLen = List.first(grid) |> length()
