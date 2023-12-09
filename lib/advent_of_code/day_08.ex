@@ -1,7 +1,7 @@
 defmodule AdventOfCode.Day08 do
 
-  defp get_parsed_input do
-    input = AdventOfCode.Input.get!(8, 2023)
+  defp get_parsed_input(input) do
+    # input = AdventOfCode.Input.get!(8, 2023)
 
     #  # 6
 #     input = "LLR
@@ -83,9 +83,9 @@ defmodule AdventOfCode.Day08 do
     
   end
 
-  def part1(_args) do
+  def part1(args) do
 
-    input = get_parsed_input()
+    input = get_parsed_input(args)
 
     traverse(input.directions, input.locations, 0, "AAA")
     
@@ -186,9 +186,9 @@ defmodule AdventOfCode.Day08 do
   # end
 
 
-  def part2(_args) do
+  def part2(args) do
 
-    input = get_parsed_input()
+    input = get_parsed_input(args)
 
     all_locs_ending_in_A = input[:locations]
     |> Enum.filter(fn {name, _} -> String.ends_with?(name, "A") end)

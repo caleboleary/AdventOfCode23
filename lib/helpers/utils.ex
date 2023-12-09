@@ -15,7 +15,7 @@ defmodule Helpers.Utils do
 
     def log_interval(data_to_log, log_when_divisible_by, step) do
         if rem(step, log_when_divisible_by) == 0 do
-            inspect(data_to_log)
+            Helpers.Utils.inspect(data_to_log)
         end
 
         data_to_log
