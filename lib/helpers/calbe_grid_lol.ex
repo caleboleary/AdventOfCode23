@@ -21,8 +21,8 @@ defmodule Helpers.CalbeGridLol do
         if (
             x >= 0 && 
             y >= 0 &&
-            x < (get_grid_width(grid) - 1) &&
-            y < (get_grid_len(grid) - 1) 
+            x <= (get_grid_width(grid) - 1) &&
+            y <= (get_grid_len(grid) - 1) 
         ) do
             Enum.at(grid, y) |> Enum.at(x)
         else
@@ -32,6 +32,21 @@ defmodule Helpers.CalbeGridLol do
 
     def get_by_point_and_transformation(grid, start_x, start_y, {transform_x, transform_y}, out_of_bounds_response \\ nil) do
         get_by_x_y(grid, start_x + transform_x, start_y + transform_y, out_of_bounds_response)
+    end
+
+    def find_point(grid, find_func) do
+        Enum.with_index(grid) |> Enum.map(fn {row, y} -> 
+            Enum.with_index(row) |> Enum.map(fn {col, x} -> 
+                if find_func.(col) do
+                    {x, y}
+                else
+                    nil
+                end
+            end)
+        end) 
+        |> List.flatten() 
+        |> Enum.filter(fn x -> x != nil end)
+        |> List.first()
     end
 
 end
