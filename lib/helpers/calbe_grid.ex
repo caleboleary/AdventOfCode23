@@ -43,6 +43,29 @@ defmodule Helpers.CalbeGrid do
         end
     end
 
+    def set_by_x_y(grid, x, y, value) do
+        Map.put(grid, {x, y}, value)
+    end
+
+    def extract_text_representation(grid, rowDelimiter \\ "\n", colDelimiter \\ "") do
+        Enum.reduce(0..(get_grid_len(grid) - 1), "", fn y, acc -> 
+            Enum.reduce(0..(get_grid_width(grid) - 1), acc, fn x, acc -> 
+                acc <> get_by_x_y(grid, x, y) <> colDelimiter
+            end) <> rowDelimiter
+        end)
+    end
+
+    def visualize_grid(grid) do
+        Enum.reduce(0..(get_grid_len(grid) - 1), "", fn y, acc -> 
+            Enum.reduce(0..(get_grid_width(grid) - 1), acc, fn x, acc -> 
+                acc <> get_by_x_y(grid, x, y) <> ""
+            end) <> "\n"
+        end)
+        |> IO.write()
+
+        grid
+    end
+
     def get_by_point_and_transformation(grid, start_x, start_y, {transform_x, transform_y}, out_of_bounds_response \\ nil) do
         get_by_x_y(grid, start_x + transform_x, start_y + transform_y, out_of_bounds_response)
     end
