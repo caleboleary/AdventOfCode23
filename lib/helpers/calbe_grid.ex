@@ -80,4 +80,10 @@ defmodule Helpers.CalbeGrid do
         end)
     end
 
+    def filter_points(grid, filter_func) do
+        Enum.filter(grid, fn {point, cell} -> 
+            filter_func.(cell)
+        end)
+    end
+
 end
