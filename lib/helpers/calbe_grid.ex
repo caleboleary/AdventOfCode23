@@ -86,4 +86,16 @@ defmodule Helpers.CalbeGrid do
         end)
     end
 
+    def get_row(grid, y) do
+        Enum.reduce(0..(get_grid_width(grid) - 1), [], fn x, acc -> 
+            acc ++ [get_by_x_y(grid, x, y)]
+        end)
+    end
+
+    def get_col(grid, x) do
+        Enum.reduce(0..(get_grid_len(grid) - 1), [], fn y, acc -> 
+            acc ++ [get_by_x_y(grid, x, y)]
+        end)
+    end
+
 end
