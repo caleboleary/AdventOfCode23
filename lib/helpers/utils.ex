@@ -6,7 +6,7 @@ defmodule Helpers.Utils do
 
     def dump_to_file(data, filename) do
         to_write = data
-        # |> Enum.join("\n")
+        |> Enum.join("\n")
     
         File.write!("dumps/#{filename}.txt", to_write)
     

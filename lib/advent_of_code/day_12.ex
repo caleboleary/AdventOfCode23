@@ -4,12 +4,14 @@ defmodule AdventOfCode.Day12 do
 
     input = AdventOfCode.Input.get!(12, 2023) 
 
-    input = "???.### 1,1,3
-.??..??...?##. 1,1,3
-?#?#?#?#?#?#?#? 1,3,1,6
-????.#...#... 4,1,1
-????.######..#####. 1,6,5
-?###???????? 3,2,1"
+#     input = "???.### 1,1,3
+# .??..??...?##. 1,1,3
+# ?#?#?#?#?#?#?#? 1,3,1,6
+# ????.#...#... 4,1,1
+# ????.######..#####. 1,6,5
+# ?###???????? 3,2,1"
+
+    # input = "????.#...#... 4,1,1"
 
     input
     |> String.split("\n", trim: true)
@@ -89,41 +91,71 @@ defmodule AdventOfCode.Day12 do
     end)
   end
 
-  # brainstorm
-  # can we reduce the problem scope at all, by attempting to replace ? with . in places where they must be .
-  # perhaps also replace ? with # in places where they must be #
+  # https://www.youtube.com/watch?v=g3Ms5e7Jdqo
+  # watched this video I saw recommended on reddit to understand a solution
+  # this impl is mostly the same as the python one in the video, though I added Michael's memoization to speed it up
+  def count("", nums) do
+    # ran out of springs
+    if nums == [], do: 1, else: 0
+  end
 
-  # ???.### 1,1,3
-  # ?.?.### 1,1,3 - second one must be a .
-  #  solved
+  def count(springs, []) do
+    # ran out of counts
+    if String.contains?(springs, "#"), do: 0, else: 1
+  end
 
-  # .??..??...?##. 1,1,3
-  # .??..??...### 1,1,3 - last one must be a #
+  def count(springs, counts) do
 
-  # ?#?#?#?#?#?#?#? 1,3,1,6
-  # .#.###.#.###### 1,3,1,6
-  #  solved
+    [current_count | remaining_counts] = counts
+
+    working_or_unknown = 
+      if String.at(springs, 0) in [".", "?"] do
+        memoized({String.slice(springs, 1..-1), [current_count | remaining_counts]}, fn ->
+          count(String.slice(springs, 1..-1), [current_count | remaining_counts])
+        end)
+      else
+        0
+      end
+
+    broken_or_unknown = 
+      if String.at(springs, 0) in ["#", "?"] do
+        if current_count <= String.length(springs) and 
+           not String.contains?(String.slice(springs, 0..current_count - 1), ".") and
+           (current_count == String.length(springs) or String.at(springs, current_count) != "#") do
+          memoized({String.slice(springs, current_count + 1..-1), remaining_counts}, fn ->
+            count(String.slice(springs, current_count + 1..-1), remaining_counts)
+          end)
+        else
+          0
+        end
+      else
+        0
+      end
+
+    working_or_unknown + broken_or_unknown
+  end
 
   def part2(_args) do
 
     input = get_parsed_input()
 
     input = transform_input_for_p2(input)
-    
-    first = Enum.at(input, 0)
-
-    IO.inspect(first)
-
-    # Regex.scan(~r/(?:(?<=^)|(?<=[.?]))(?:[#?]{3})(?:(?=$)|(?=[.?]))/, first[:springs], return: :index)
 
 
-    # Enum.map(input, fn %{springs: springs, counts: counts} -> 
-    #   get_valid_permutations(springs, counts)
-    #   |> length()
-    #   |> IO.inspect(label: "valid_permutations")
-    # end)
-    # |> Enum.reduce(0, fn currTotal, num -> currTotal + num end)
-
+    Enum.with_index(input)
+    |> Enum.map(fn {row, i} -> 
+      count(row[:springs], row[:counts])
+      |> IO.inspect(label: "row #{i}")
+    end)
+    |> Enum.sum()
 
   end
+
+  # https://github.com/michaelst/aoc/blob/main/lib/advent_of_code/day_12.ex
+  defp memoized(key, fun) do
+    with nil <- Process.get(key) do
+      fun.() |> tap(&Process.put(key, &1))
+    end
+  end
+
 end
