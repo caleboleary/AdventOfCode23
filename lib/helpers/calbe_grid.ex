@@ -102,4 +102,111 @@ defmodule Helpers.CalbeGrid do
         end)
     end
 
+    # based on my impl from last year https://github.com/caleboleary/AdventOfCode22/blob/main/day12/day12pt1.exs
+    def dijkstra(grid, {start_x, start_y}, get_viable_moves, get_should_halt) do
+
+        priority_queue = Enum.filter(grid, fn {point, cell} -> 
+            point != :util
+        end)
+        |> Enum.map(fn {point, cell} -> 
+            {point, if point == {start_x, start_y} do 0 else :infinity end}
+        end)
+        |> Enum.sort(fn {_, a}, {_, b} -> a < b end)
+
+        Enum.reduce_while(1..20000, %{priority_queue: priority_queue, visitedNodes: []}, fn _iteration, acc ->
+
+            {current_node, current_node_dist} = Enum.find(acc.priority_queue, fn {key, _} -> !Enum.member?(acc.visitedNodes, key) end)
+
+            viable_neighbors = get_viable_moves.(grid, current_node)
+            |> Enum.map(fn neighbor -> 
+                neighbor[:coords]
+            end)
+
+            new_priority_queue = Enum.reduce(viable_neighbors, acc.priority_queue, fn neighbor, acc2 ->
+                
+                neighbor_dist = Enum.find(acc.priority_queue, fn {key, _} -> key == neighbor end) |> elem(1)  
+
+                if neighbor_dist === :infinity or neighbor_dist > current_node_dist + 1 do
+
+                    base_dist = if current_node_dist === :infinity do 0 else current_node_dist end
+
+                    filtered_acc2 = acc2 |> Enum.filter(fn {key, _} -> key != neighbor end)
+
+                    new_entry = {neighbor, base_dist + 1}
+
+                    filtered_acc2 ++ [new_entry]
+                else
+                    acc2
+                end
+            end)
+            |> Enum.sort(fn {_, a}, {_, b} -> a < b end)
+
+            new_visited_nodes = [current_node | acc.visitedNodes]
+
+            should_halt = get_should_halt.(grid, new_priority_queue)
+
+            if should_halt do
+                {:halt, new_priority_queue}
+            else
+                {:cont, %{priority_queue: new_priority_queue, visitedNodes: new_visited_nodes}}
+            end
+
+        end)
+
+    end
+
+    #example
+    # def get_possible_moves(grid, {curr_x, curr_y}) do 
+
+    #     alphabet = "abcdefghijklmnopqrstuvwxyz"
+    
+    #     {start_x, start_y} = Helpers.CalbeGrid.find_point(grid, fn cell -> cell == "S" end)
+    #     {end_x, end_y} = Helpers.CalbeGrid.find_point(grid, fn cell -> cell == "E" end)
+    
+    #     #overwrite start with a and end with z
+    #     grid = Helpers.CalbeGrid.set_by_x_y(grid, start_x, start_y, "a")
+    #     |> Helpers.CalbeGrid.set_by_x_y(end_x, end_y, "z")
+    
+    #     possible_moves = [
+    #       {curr_x + 1, curr_y},
+    #       {curr_x - 1, curr_y},
+    #       {curr_x, curr_y + 1},
+    #       {curr_x, curr_y - 1}
+    #     ]
+    #     |> Enum.map(fn {x, y} -> 
+    #       %{coords: {x, y}, cell: Helpers.CalbeGrid.get_by_x_y(grid, x, y)}
+    #     end)
+    #     |> IO.inspect([label: "possible_moves", charlists: :as_lists])
+    #     |> Enum.filter(fn move -> move[:cell] != nil end)
+    #     |> IO.inspect([label: "possible_moves_filt", charlists: :as_lists])
+    #     |> Enum.filter(fn move -> 
+    #       IO.inspect(Helpers.CalbeGrid.get_by_x_y(grid, curr_x, curr_y), [label: "curr cell"])
+    #       IO.inspect(move[:cell], [label: "considering a move to this cell"])
+    #       str_index_of(alphabet, move[:cell]) <= (str_index_of(alphabet, Helpers.CalbeGrid.get_by_x_y(grid, curr_x, curr_y)) + 1)
+    #     end)
+    #     |> IO.inspect([label: "possible_moves_filt2", charlists: :as_lists])
+
+    #   end
+    
+    #   def get_should_halt(grid, priority_queue) do
+    
+    #     end_point = Helpers.CalbeGrid.find_point(grid, fn cell -> cell == "E" end)
+    #     |> IO.inspect([label: "end_point", charlists: :as_lists])
+    
+    #     end_dist = Enum.find(priority_queue, fn {point, _} -> point == end_point end) |> elem(1)
+    #     |> IO.inspect([label: "end_dist", charlists: :as_lists])
+    
+    #     end_dist != :infinity
+        
+    #   end
+
+
+
+    # start = Helpers.CalbeGrid.find_point(grid, fn cell -> cell == "S" end)
+
+    # Helpers.CalbeGrid.dijkstra(grid, start, &get_possible_moves/2, &get_should_halt/2)
+
+    #returns priority queue
+    
+
 end
