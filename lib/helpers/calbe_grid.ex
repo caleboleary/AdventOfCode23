@@ -56,12 +56,16 @@ defmodule Helpers.CalbeGrid do
     end
 
     def visualize_grid(grid) do
+
+        IO.puts("---grid---")
         Enum.reduce(0..(get_grid_len(grid) - 1), "", fn y, acc -> 
             Enum.reduce(0..(get_grid_width(grid) - 1), acc, fn x, acc -> 
                 acc <> get_by_x_y(grid, x, y) <> ""
             end) <> "\n"
         end)
         |> IO.write()
+        IO.puts("---grid---")
+
 
         grid
     end
