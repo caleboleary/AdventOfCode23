@@ -87,6 +87,45 @@ defmodule AdventOfCode.Day18 do
 
   end
 
+  defp hex_to_instruction(hex) do
+    hex = String.replace(hex, "#", "")
+
+    first_5 = String.slice(hex, 0, 5)
+
+    last_1 = String.slice(hex, 5, 1) |> String.to_integer()
+
+    base_10 = String.to_integer(first_5, 16)
+
+    dir = case last_1 do
+      0 -> "R"
+      1 -> "D"
+      2 -> "L"
+      3 -> "U"
+    end
+
+    %{
+      direction: dir,
+      steps: base_10,
+      color_code: nil
+    }
+  end
+
   def part2(_args) do
+
+    input = get_parsed_input()
+
+    instructions = Enum.map(input, fn instruction ->
+      hex_to_instruction(instruction.color_code)
+    end)
+    |> IO.inspect()
+
+    verticies = transform_instructions_to_verticies(instructions)
+
+    area = calc_area_irregular_polygon(verticies)
+
+    perimeter = get_perimeter(instructions)
+
+    area + (perimeter * 0.5) + 1
+
   end
 end
