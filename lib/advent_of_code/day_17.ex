@@ -18,6 +18,7 @@ defmodule AdventOfCode.Day17 do
 # 2546548887735
 # 4322674655533"
 
+
     Helpers.CalbeGrid.parse(input, "\n", "")
 
   end
@@ -185,28 +186,57 @@ end
     |> Enum.sort(fn {_, a}, {_, b} -> a < b end)
     |> Enum.at(0)
     
-    # paths_taken = Enum.map(ends, fn {node, _} -> 
-      
-    #   Enum.reduce_while(1..1000, [node], fn _iteration, acc -> 
-
-    #     latest_node = Enum.at(acc, -1)
-    #     |> IO.inspect([label: "latest_node", charlists: :as_lists])
-
-    #     if latest_node |> elem(0) == start_pos do
-    #       {:halt, acc}
-    #     else
-    #       prev_node = preds[latest_node]
-    #       {:cont, acc ++ [prev_node]}
-    #     end
-       
-    #   end)
-    #   |> Enum.reverse()
-
-    # end)
-
   end
 
+  defp get_viable_moves_p2(grid, node, _predecessors) do
+
+    {pos, most_recent_direction} = node
+   
+    {x, y} = pos
+
+    new_direction = if most_recent_direction == :horiz do :vert else :horiz end
+    
+    Enum.flat_map([-1, 1], fn direction -> 
+      Enum.flat_map(4..10, fn distance -> 
+        if (most_recent_direction == :horiz) do
+          [
+            {{x, y + (direction * distance)}, new_direction},
+            {{x, y - (direction * distance)}, new_direction},
+          ]
+        else
+          [
+            {{x + (direction * distance), y}, new_direction},
+            {{x - (direction * distance), y}, new_direction},
+          ]
+        end
+      end)
+    end)
+    |> Enum.filter(fn {move, dir} ->
+      {move_x, move_y} = move
+      
+      Helpers.CalbeGrid.get_by_x_y(grid, move_x, move_y, nil) != nil
+    end)
+  end       
+
   def part2(_args) do
+    input = get_parsed_input()
+    |> Helpers.CalbeGrid.visualize_grid()
+
+    grid_len = Helpers.CalbeGrid.get_grid_len(input)
+    grid_width = Helpers.CalbeGrid.get_grid_width(input)
+
+    start_pos = {0, 0}
+    end_pos = {grid_width - 1, grid_len - 1}
+
+    {pq, preds} = dijkstra(input, start_pos, &get_viable_moves_p2/3, &get_should_halt/2, &get_weight/3)
+
+    ends = Enum.filter(pq, fn {node, _} -> 
+      {point, _} = node
+      point == end_pos
+    end)
+    |> IO.inspect([label: "ends", charlists: :as_lists])
+    |> Enum.sort(fn {_, a}, {_, b} -> a < b end)
+    |> Enum.at(0)
 
   end
 
