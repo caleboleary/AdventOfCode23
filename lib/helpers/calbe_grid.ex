@@ -47,6 +47,10 @@ defmodule Helpers.CalbeGrid do
         Map.put(grid, {x, y}, value)
     end
 
+    def manhattan_distance({x1, y1}, {x2, y2}) do
+        abs(x1 - x2) + abs(y1 - y2)
+    end
+
     def extract_text_representation(grid, rowDelimiter \\ "\n", colDelimiter \\ "") do
         Enum.reduce(0..(get_grid_len(grid) - 1), "", fn y, acc -> 
             Enum.reduce(0..(get_grid_width(grid) - 1), acc, fn x, acc -> 
@@ -115,12 +119,14 @@ defmodule Helpers.CalbeGrid do
 
         Enum.reduce_while(1..20000, %{priority_queue: priority_queue, visited_nodes: [], predecessors: %{}}, fn _iteration, acc ->
 
-            {current_node, current_node_dist} = Enum.find(acc.priority_queue, fn {key, _} -> !Enum.member?(acc.visited_nodes, key) end)
+            IO.inspect(acc, [label: "acc", charlists: :as_lists])
+
+            {current_node, current_node_dist} = Enum.find(acc.priority_queue, fn {key, value} -> 
+                !Enum.member?(acc.visited_nodes, key) && value != :infinity 
+            end)
+            |> IO.inspect([label: "current_node", charlists: :as_lists])
 
             viable_neighbors = get_viable_moves.(grid, current_node, acc.predecessors)
-            |> Enum.map(fn neighbor -> 
-                neighbor[:coords]
-            end)
 
             new_priority_queue_and_preds = Enum.reduce(viable_neighbors, {acc.priority_queue, acc.predecessors}, fn neighbor, {acc2, preds} ->
                 
@@ -132,7 +138,7 @@ defmodule Helpers.CalbeGrid do
 
                     filtered_acc2 = acc2 |> Enum.filter(fn {key, _} -> key != neighbor end)
 
-                    new_entry = {neighbor, base_dist + get_weight.(grid, neighbor)}
+                    new_entry = {neighbor, base_dist + get_weight.(grid, neighbor, current_node)}
 
                     new_preds = Map.put(preds, neighbor, current_node)
 
