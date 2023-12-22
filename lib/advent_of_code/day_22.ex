@@ -4,13 +4,13 @@ defmodule AdventOfCode.Day22 do
 
     input = AdventOfCode.Input.get!(22, 2023)
 
-    input = "1,0,1~1,2,1
-0,0,2~2,0,2
-0,2,3~2,2,3
-0,0,4~0,2,4
-2,0,5~2,2,5
-0,1,6~2,1,6
-1,1,8~1,1,9"
+#     input = "1,0,1~1,2,1
+# 0,0,2~2,0,2
+# 0,2,3~2,2,3
+# 0,0,4~0,2,4
+# 2,0,5~2,2,5
+# 0,1,6~2,1,6
+# 1,1,8~1,1,9"
 
     bricks = String.split(input, "\n", trim: true)
     |> Enum.map(fn brick ->
@@ -113,7 +113,7 @@ defmodule AdventOfCode.Day22 do
     {{x1, y1, z1 - n}, {x2, y2, z2 - n}}
   end
 
-  defp settle_bricks(bricks) do
+  defp settle_bricks(bricks, should_reverse \\ true) do
     # sort bricks by lowest y to highest y
     sorted = bricks
     |> Enum.sort(fn {a1, a2}, {b1, b2} -> min(a1 |> elem(2), a2 |> elem(2)) <  min(b1 |> elem(2), b2 |> elem(2)) end)
@@ -144,7 +144,12 @@ defmodule AdventOfCode.Day22 do
         [new_brick | acc]
       end
     end)
-    |> Enum.reverse()
+
+    if should_reverse do
+      Enum.reverse(settled)
+    else
+      settled
+    end
   end
 
   def part1(_args) do
@@ -171,12 +176,85 @@ defmodule AdventOfCode.Day22 do
 
     input = get_parsed_input()
 
-    settled = settle_bricks(input)
+    settled = settle_bricks(input, false)
+    
+    IO.puts("settled complete")
 
     support_structure = Enum.reduce(settled, %{}, fn brick, acc ->
       Map.put(acc, brick, get_supporters_of_brick(brick, settled))
     end)
     |> IO.inspect(label: "support_structure")
+
+    bricks_who_would_fall_if_removed = Enum.reduce(settled, %{}, fn brick, acc ->
+      #if 'brick' was removed, how many bricks would then move as a result?
+
+      # IO.inspect(brick, label: "brick")
+
+      #create support structure but without "brick" anywhere in it
+      support_structure_without_brick = Enum.reduce(support_structure, %{}, fn {brick2, supporters}, acc ->
+        new_supporters = Enum.filter(supporters, fn brick3 ->
+          brick3 != brick
+        end)
+
+        Map.put(acc, brick2, new_supporters)
+      end)
+      |> Map.delete(brick)
+      # |> IO.inspect(label: "support_structure_without_brick")
+
+      count = Enum.reduce_while(1..1000, support_structure_without_brick, fn i, acc ->
+        # find all bricks that are not supported by any other bricks who also don't touch 1 with either z coord. 
+        # if none, return halt and length of original support structure minus length of final support structure
+
+        if (i > 999) do
+          IO.puts("we hit 999 somthign went wrong lol")
+        end
+
+        bricks_that_would_fall = Enum.filter(acc, fn {brick2, supporters} ->
+          brick2 |> elem(0) |> elem(2) > 1 
+          && brick2 |> elem(1) |> elem(2) > 1 
+          && supporters == []
+        end)
+        |> Enum.map(fn {brick2, supporters} ->
+          brick2
+        end)
+        # |> IO.inspect(label: "bricks_that_would_fall")
+
+        if bricks_that_would_fall == [] do
+          {:halt, map_size(support_structure) - map_size(acc)}
+        else
+          # remove all bricks that would fall from the support structure, both as supporters and as bricks
+          new_support_structure = Enum.reduce(acc, %{}, fn {brick2, supporters}, acc2 ->
+            new_supporters = Enum.filter(supporters, fn brick3 ->
+              !Enum.any?(bricks_that_would_fall, fn brick4 ->
+                brick4 == brick3
+              end)
+            end)
+
+            if !Enum.any?(bricks_that_would_fall, fn brick3 ->
+              brick3 == brick2
+            end) do
+              Map.put(acc2, brick2, new_supporters)
+            else
+              acc2
+            end
+          end)
+          # |> IO.inspect(label: "new_support_structure")
+
+          {:cont, new_support_structure}
+        end
+          
+        
+      end)
+
+      Map.put(acc, brick, count - 1)
+
+      # Map.put(acc, brick, count_bricks_directly_fall + count_bricks_indirectly_fall)
+
+    end)
+    |> IO.inspect(label: "bricks_who_would_fall_if_removed")
+    |> Enum.reduce(0, fn {brick, count}, acc ->
+      acc + count
+    end)
 
   end
 end
